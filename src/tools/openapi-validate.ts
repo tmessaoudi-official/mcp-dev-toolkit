@@ -4,6 +4,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
+import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
 export const OpenApiValidateInput = z.object({
@@ -157,20 +158,22 @@ function parseSpecText(text: string, hint: string): ParseSpecSuccess | OpenApiVa
   try {
     return { spec: JSON.parse(text) as OpenApiSpec };
   } catch {
-    // Try basic YAML parsing (handle simple cases without a YAML lib)
-    // For production use, 'yaml' package would be better — here we handle JSON-compatible YAML
     if (hint.endsWith('.json')) {
       return { error: 'Spec file has .json extension but failed to parse as JSON' };
     }
-    // Attempt very basic YAML -> rough heuristic: many specs are JSON-serializable
+    // Parse as YAML (covers JSON-as-YAML, anchors, multi-doc, etc.)
     try {
-      // Strip YAML comments, then try JSON — covers simple cases
-      const stripped = text.replace(/#[^\n]*/g, '').trim();
-      return { spec: JSON.parse(stripped) as OpenApiSpec };
-    } catch {
+      const parsed = parseYaml(text) as OpenApiSpec;
+      if (typeof parsed !== 'object' || parsed === null) {
+        return {
+          error: 'YAML parsed but result is not an object',
+          details: { hint } as Record<string, unknown>,
+        };
+      }
+      return { spec: parsed };
+    } catch (yamlErr) {
       return {
-        error:
-          'Failed to parse spec as JSON or simple YAML. Install the `yaml` package for full YAML support.',
+        error: `Failed to parse spec as JSON or YAML: ${yamlErr instanceof Error ? yamlErr.message : String(yamlErr)}`,
         details: { hint, preview: text.slice(0, 200) } as Record<string, unknown>,
       };
     }

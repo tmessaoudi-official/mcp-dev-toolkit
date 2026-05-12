@@ -370,4 +370,39 @@ ${JSON.stringify({ openapi: '3.0.0', info: { title: 'YAML API', version: '2.0.0'
     expect(result).toHaveProperty('error');
     expect((result as { error: string }).error).toContain('No endpoints');
   });
+
+  it('handles real YAML syntax (not JSON-serialised)', async () => {
+    const yamlSpec = `
+openapi: "3.0.0"
+info:
+  title: Real YAML API
+  version: "1.0.0"
+paths: {}
+`;
+
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(yamlSpec as unknown as Buffer);
+
+    const result = await openApiValidate({
+      spec_path: '/spec.yaml',
+      base_url: 'http://localhost:3000',
+    });
+
+    // Should fail with "No endpoints" (parsing succeeded), not a YAML parse error
+    expect(result).toHaveProperty('error');
+    expect((result as { error: string }).error).toContain('No endpoints');
+  });
+
+  it('returns parse error for completely invalid spec text', async () => {
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(': invalid: yaml: {{{' as unknown as Buffer);
+
+    const result = await openApiValidate({
+      spec_path: '/spec.yaml',
+      base_url: 'http://localhost:3000',
+    });
+
+    expect(result).toHaveProperty('error');
+    expect((result as { error: string }).error).toMatch(/Failed to parse spec|YAML parsed/);
+  });
 });
