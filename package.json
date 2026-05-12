@@ -1,0 +1,74 @@
+{
+  "name": "mcp-dev-toolkit",
+  "version": "1.0.0",
+  "description": "MCP server giving Claude real superpowers over a local development codebase",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "developer-tools",
+    "postgresql",
+    "mysql",
+    "symfony",
+    "docker",
+    "git",
+    "openapi"
+  ],
+  "license": "MIT",
+  "author": "Takieddine Messaoudi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/mcp-dev-toolkit"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "mcp-dev-toolkit": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "lint": "biome check src tests",
+    "lint:fix": "biome check --write src tests",
+    "format": "biome format --write src tests",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "mysql2": ">=3.0.0",
+    "pg": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.0.0",
+    "@vitest/coverage-v8": "4.1.6",
+    "mysql2": "3.22.3",
+    "pg": "8.20.0",
+    "typescript": "^5.4.0",
+    "vitest": "4.1.6"
+  }
+}
