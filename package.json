@@ -17,7 +17,7 @@
   "author": "Takieddine Messaoudi",
   "repository": {
     "type": "git",
-    "url": "https://github.com/example/mcp-dev-toolkit"
+    "url": "https://github.com/takieddine-messaoudi/mcp-dev-toolkit"
   },
   "engines": {
     "node": ">=20.0.0"
