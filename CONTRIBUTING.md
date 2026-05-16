@@ -9,7 +9,7 @@
 ## Getting started
 
 ```bash
-git clone https://github.com/takieddine-messaoudi/mcp-dev-toolkit
+git clone https://github.com/tmessaoudi-official/mcp-dev-toolkit
 cd mcp-dev-toolkit
 npm install
 npm run build
