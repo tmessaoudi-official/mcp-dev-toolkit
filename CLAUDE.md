@@ -129,3 +129,51 @@ TEST_POSTGRES_DSN=postgresql://u:p@localhost/db npm test
 ## CI
 
 `.github/workflows/ci.yml` — runs on Node 20 + 22, installs deps, runs lint + typecheck + test with coverage. No Docker or real DB required (all mocked).
+
+<!-- Merged 2026-09-28 from the former .claude/CLAUDE.md (review-remediation 5.9): both files loaded every session and paraphrased each other. Its What This Project Is / Project Structure / Common Commands sections were already covered above and were dropped; the five below were unique. -->
+
+## Key Design Decisions
+
+- **No shell string interpolation** — `shell.ts` always uses `spawn()` with an args array.
+- **Credentials never logged** — `sanitizeConnectionString()` strips passwords before any error message.
+- **pg and mysql2 are optional peer deps** — loaded dynamically via `import()` based on connection string prefix.
+- **All tools return structured errors** — never throw to the MCP layer; always `{ error, details? }`.
+- **Query rollback** — `db_query_analyze` wraps EXPLAIN ANALYZE in a transaction that is always rolled back.
+
+## Toolchain
+
+- **TypeScript** with strict mode + `noUncheckedIndexedAccess`
+- **Biome v2** — replaces ESLint + Prettier (single tool for lint + format)
+- **Vitest** — test runner with v8 coverage
+- **MCP SDK** — `@modelcontextprotocol/sdk` (stdio transport)
+- **Zod** — input schema validation (same schemas exposed as MCP JSON Schema)
+
+## Adding a New Tool
+
+1. Create `src/tools/<name>.ts` with:
+   - A named Zod schema `export const MyInput = z.object({...})`
+   - An async function `export async function myTool(input: MyInput): Promise<Result | ErrorResult>`
+   - All errors caught and returned as `{ error: string, details?: object }`
+
+2. Register in `src/index.ts`:
+   ```typescript
+   import { MyInput, myTool } from './tools/my-tool.js';
+   server.tool('my_tool', 'Description', MyInput.shape, async (args) => {
+     const result = await myTool(MyInput.parse(args));
+     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+   });
+   ```
+
+3. Add unit tests in `tests/tools/<name>.test.ts` — mock all external calls.
+
+## Security Notes
+
+- Shell commands: always `spawn(cmd, argsArray)`, never `exec('cmd ' + userInput)`
+- DB credentials: pass directly to pg/mysql2 drivers, never log or interpolate into SQL
+- Docker socket: the Dockerfile mounts `/var/run/docker.sock` — document this clearly in README
+- OpenAPI validation: only makes GET requests by default; POST/PUT/DELETE with required bodies are skipped
+
+## Global Rules
+
+The global reasoning framework from `~/.claude/CLAUDE.md` applies: 8-phase workflow,
+Completion Gate (Rule 6), TDD (Rule 7), security-first (Rule 2).
